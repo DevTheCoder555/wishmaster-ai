@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" // 
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  password        String
+  name            String?
+  avatarUrl       String?
+  credits         Int              @default(100)
+  createdAt       DateTime         @default(now())
+  wishes          Wish[]
+  contributions   Contribution[]
+}
+
+model Wish {
+  id              String           @id @default(cuid())
+  userId          String
+  user            User             @relation(fields: [userId], references: [id])
+  title           String
+  description     String
+  category        String
+  budget          Float
+  fulfilledAmount Float            @default(0)
+  isAnonymous     Boolean          @default(false)
+  latitude        Float?
+  longitude       Float?
+  createdAt       DateTime         @default(now())
+  contributions   Contribution[]
+  affiliateLinks  AffiliateLink[]
+}
+
+model Contribution {
+  id          String   @id @default(cuid())
+  wishId      String
+  wish        Wish     @relation(fields: [wishId], references: [id])
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  amount      Float
+  isAnonymous Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model AffiliateLink {
+  id             String   @id @default(cuid())
+  wishId         String
+  wish           Wish     @relation(fields: [wishId], references: [id])
+  productName    String
+  url            String
+  commissionRate Float
+  clicks         Int      @default(0)
+  earnings       Float    @default(0)
+}
