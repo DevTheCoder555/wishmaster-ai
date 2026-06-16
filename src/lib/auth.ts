@@ -26,10 +26,17 @@ export const authOptions: NextAuthOptions = {
               email: credentials.email,
               password: hashedPassword,
               name: credentials.name || "User",
-              credits: 100
+              credits: 100,
+              isAdmin: false // New users are never admins by default
             }
           });
-          return { id: user.id, email: user.email, name: user.name, credits: user.credits };
+          return { 
+            id: user.id, 
+            email: user.email, 
+            name: user.name, 
+            credits: user.credits,
+            isAdmin: user.isAdmin 
+          };
         } else {
           const user = await prisma.user.findUnique({ where: { email: credentials.email } });
           if (!user) throw new Error("User not found");
@@ -37,18 +44,29 @@ export const authOptions: NextAuthOptions = {
           const isValid = await bcrypt.compare(credentials.password, user.password);
           if (!isValid) throw new Error("Invalid password");
           
-          return { id: user.id, email: user.email, name: user.name, credits: user.credits };
+          return { 
+            id: user.id, 
+            email: user.email, 
+            name: user.name, 
+            credits: user.credits,
+            isAdmin: user.isAdmin 
+          };
         }
       }
     })
   ],
-  pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
+  pages: { 
+    signIn: "/login" 
+  },
+  session: { 
+    strategy: "jwt" 
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.credits = (user as any).credits;
+        token.isAdmin = (user as any).isAdmin || false; // 👈 Pass isAdmin to the JWT token
       }
       return token;
     },
@@ -56,8 +74,9 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.credits = token.credits as number;
+        (session.user as any).isAdmin = token.isAdmin as boolean; // 👈 Pass isAdmin to the frontend session
       }
       return session;
     }
   }
-};
+}; 
