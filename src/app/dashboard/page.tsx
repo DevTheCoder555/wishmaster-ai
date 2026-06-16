@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Wallet, Gift, TrendingUp, Users, Plus, History, Link as LinkIcon } from 'lucide-react';
+import { Wallet, Gift, TrendingUp, Plus, History } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -42,8 +42,8 @@ export default function DashboardPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-20 text-center">
         <div className="h-8 w-48 bg-white/10 rounded animate-pulse mx-auto mb-4" />
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-24 bg-white/5 rounded-xl animate-pulse" />)}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-white/5 rounded-xl animate-pulse" />)}
         </div>
       </div>
     );
@@ -65,7 +65,8 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* REMOVED AFFILIATE STATS. Now shows 3 clean, user-focused cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card className="glass">
           <CardContent className="flex items-center justify-between p-6">
             <div>
@@ -87,17 +88,8 @@ export default function DashboardPage() {
         <Card className="glass">
           <CardContent className="flex items-center justify-between p-6">
             <div>
-              <p className="text-white/60 text-sm">Affiliate Clicks</p>
-              <p className="text-3xl font-bold mt-1">{data.stats.affiliateClicks}</p>
-            </div>
-            <LinkIcon className="h-10 w-10 text-blue-400 opacity-80" />
-          </CardContent>
-        </Card>
-        <Card className="glass">
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-white/60 text-sm">Affiliate Revenue</p>
-              <p className="text-3xl font-bold mt-1 text-green-400">${data.stats.affiliateRevenue.toFixed(2)}</p>
+              <p className="text-white/60 text-sm">Fulfilled Wishes</p>
+              <p className="text-3xl font-bold mt-1">{data.stats.fulfilledWishes}</p>
             </div>
             <TrendingUp className="h-10 w-10 text-green-400 opacity-80" />
           </CardContent>
@@ -117,10 +109,10 @@ export default function DashboardPage() {
                     <div key={wish.id} className="flex items-center justify-between p-4 rounded-lg bg-white/5 border border-white/10">
                       <div>
                         <h4 className="font-medium">{wish.title}</h4>
-                        <p className="text-sm text-white/60">{wish.category} • {wish._count.contributions} contributions • {wish.affiliateLinks.length} affiliate links</p>
+                        <p className="text-sm text-white/60">{wish.category} • {wish._count.contributions} contributions</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">${wish.fulfilledAmount} / ${wish.budget}</p>
+                        <p className="font-medium">₹{wish.fulfilledAmount} / ₹{wish.budget}</p>
                         <p className={`text-sm ${wish.fulfilledAmount >= wish.budget ? 'text-green-400' : 'text-primary'}`}>
                           {wish.fulfilledAmount >= wish.budget ? 'Fulfilled' : 'In Progress'}
                         </p>
@@ -147,7 +139,7 @@ export default function DashboardPage() {
                         <p className="font-medium text-white/80">Contributed to: {contrib.wish.title}</p>
                         <p className="text-xs text-white/50">{new Date(contrib.createdAt).toLocaleDateString()}</p>
                       </div>
-                      <span className="text-green-400 font-medium">-${contrib.amount} cr</span>
+                      <span className="text-green-400 font-medium">-{contrib.amount} cr</span>
                     </div>
                   ))}
                 </div>

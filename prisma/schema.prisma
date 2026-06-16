@@ -3,48 +3,96 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" // 
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+enum WishStatus {
+  Draft
+  Active
+  Boosted
+  FundingComplete
+  FulfillmentRequested
+  UnderReview
+  Approved
+  Ordered
+  Fulfilled
+  Rejected
+  Expired
+}
+
+enum VerificationStatus {
+  Pending
+  Approved
+  Rejected
+}
+
 model User {
-  id              String           @id @default(cuid())
-  email           String           @unique
-  password        String
-  name            String?
-  avatarUrl       String?
-  credits         Int              @default(100)
-  createdAt       DateTime         @default(now())
-  wishes          Wish[]
-  contributions   Contribution[]
+  id                  String                @id @default(cuid())
+  email               String                @unique
+  password            String
+  name                String?
+  avatarUrl           String?
+  credits             Int                   @default(100)
+  isAdmin             Boolean               @default(false)
+  createdAt           DateTime              @default(now())
+  wishes              Wish[]
+  contributions       Contribution[]
+  fulfillmentRequests FulfillmentRequest[]
+  creditPurchases     CreditPurchase[]
 }
 
 model Wish {
-  id              String           @id @default(cuid())
-  userId          String
-  user            User             @relation(fields: [userId], references: [id])
-  title           String
-  description     String
-  category        String
-  budget          Float
-  fulfilledAmount Float            @default(0)
-  isAnonymous     Boolean          @default(false)
-  latitude        Float?
-  longitude       Float?
-  createdAt       DateTime         @default(now())
-  contributions   Contribution[]
-  affiliateLinks  AffiliateLink[]
+  id                String                @id @default(cuid())
+  userId            String
+  user              User                  @relation(fields: [userId], references: [id])
+  title             String
+  description       String
+  category          String
+  budget            Float
+  fulfilledAmount   Float                 @default(0)
+  status            WishStatus            @default(Active)
+  latitude          Float?
+  longitude         Float?
+  createdAt         DateTime              @default(now())
+  contributions     Contribution[]
+  fulfillmentRequests FulfillmentRequest[]
+  affiliateLinks    AffiliateLink[]
 }
 
 model Contribution {
-  id          String   @id @default(cuid())
-  wishId      String
-  wish        Wish     @relation(fields: [wishId], references: [id])
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  amount      Float
-  isAnonymous Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id                 String             @id @default(cuid())
+  wishId             String
+  wish               Wish               @relation(fields: [wishId], references: [id])
+  userId             String
+  user               User               @relation(fields: [userId], references: [id])
+  amount             Float
+  paymentProof       String?            // UTR / Transaction ID or Image URL
+  verificationStatus VerificationStatus @default(Pending)
+  createdAt          DateTime           @default(now())
+}
+
+model FulfillmentRequest {
+  id           String             @id @default(cuid())
+  wishId       String
+  wish         Wish               @relation(fields: [wishId], references: [id])
+  userId       String             // The wish creator
+  user         User               @relation(fields: [userId], references: [id])
+  status       VerificationStatus @default(Pending)
+  adminNotes   String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model CreditPurchase {
+  id                 String             @id @default(cuid())
+  userId             String
+  user               User               @relation(fields: [userId], references: [id])
+  amountINR          Float              // Amount paid by user
+  creditsGranted     Int
+  paymentProof       String?            // UTR / Transaction ID
+  verificationStatus VerificationStatus @default(Pending)
+  createdAt          DateTime           @default(now())
 }
 
 model AffiliateLink {

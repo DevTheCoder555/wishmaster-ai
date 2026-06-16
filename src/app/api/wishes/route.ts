@@ -51,8 +51,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Not enough credits. You need 10 credits to create a wish.' }, { status: 400 });
     }
 
-    const { title, description, category, budget, latitude, longitude, affiliateLinks } = await request.json();
+    const { title, description, category, budget, amazonLink } = await request.json();
+
+    // 🚀 INTERNAL AFFILIATE CONVERSION (Server-Side)
+    let finalAffiliateUrl = amazonLink;
+    const affiliateTag = process.env.NEXT_PUBLIC_AFFILIATE_TAG || 'yourtag-20';
     
+    try {
+      const urlObj = new URL(amazonLink);
+      // This forcefully adds or overwrites the 'tag' parameter with YOUR affiliate tag
+      urlObj.searchParams.set('tag', affiliateTag);
+      finalAffiliateUrl = urlObj.toString();
+    } catch (e) {
+      return NextResponse.json({ error: 'Invalid Amazon Link provided. Please check the URL.' }, { status: 400 });
+    }
+
+    // Create wish and deduct 10 credits in a secure transaction
     const [wish] = await prisma.$transaction([
       prisma.wish.create({
         data: {
@@ -61,15 +75,13 @@ export async function POST(request: Request) {
           description,
           category,
           budget: parseFloat(budget),
-          latitude: latitude ? parseFloat(latitude) : null,
-          longitude: longitude ? parseFloat(longitude) : null,
-          affiliateLinks: affiliateLinks && affiliateLinks.length > 0 ? {
-            create: affiliateLinks.map((link: any) => ({
-              productName: link.name,
-              url: link.url,
-              commissionRate: parseFloat(link.commission) || 0
-            }))
-          } : undefined
+          affiliateLinks: {
+            create: {
+              productName: title,
+              url: finalAffiliateUrl, // Saves the link WITH your affiliate tag
+              commissionRate: 0 // Can be updated later if you track exact rates
+            }
+          }
         },
         include: { user: true, affiliateLinks: true }
       }),
